@@ -1,15 +1,25 @@
-version: '2.1'
+version: '2'
 
 networks:
   keycloak-network:
 
 volumes:
     keycloak-postgres-data:
+        driver: local
+        driver_opts:
+            type: none
+            device: $PWD/${POSTGRES_DATA_PATH}
+            o: bind
     keycloak-nginx-letsencrypt-ssl:
+        driver: local
+        driver_opts:
+            type: none
+            device: $PWD/${KEYCLOAK_DATA_PATH}
+            o: bind
 
 services:
   postgres:
-    image: postgres:9.6-alpine
+    image: "postgres:${POSTGRES_VERSION}"
     container_name: postgres
     networks:
       - keycloak-network
@@ -25,7 +35,7 @@ services:
         max-file: "3"
     restart: unless-stopped
   keycloak:
-    image: "jboss/keycloak-postgres:${KEYCLOAK_VERSION}"
+    image: "jboss/keycloak:${KEYCLOAK_VERSION}"
     container_name: keycloak
     links:
       - postgres
@@ -34,9 +44,9 @@ services:
     depends_on:
       - postgres
     environment:
-      - POSTGRES_DATABASE=keycloak
-      - POSTGRES_USER=keycloak
-      - POSTGRES_PASSWORD
+      - DB_DATABASE=keycloak
+      - DB_USER=keycloak
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
       - PROXY_ADDRESS_FORWARDING=true
       - KEYCLOAK_USER=admin
       - KEYCLOAK_PASSWORD
